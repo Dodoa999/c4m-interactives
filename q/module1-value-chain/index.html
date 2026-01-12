@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Value Chain - Ordering</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+    <style>
+        .value-chain-container {
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .source-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-md);
+            background-color: var(--color-hover-soft);
+            border-radius: var(--border-radius-md);
+        }
+        
+        .source-item {
+            padding: var(--spacing-md);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+            cursor: move;
+            transition: all var(--transition-base);
+            text-align: center;
+            font-size: var(--font-size-sm);
+        }
+        
+        .source-item:hover {
+            border-color: var(--color-primary);
+            background-color: var(--color-hover-soft);
+            box-shadow: 0 2px 4px var(--color-shadow);
+        }
+        
+        .source-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .source-item.placed {
+            opacity: 0.4;
+            cursor: default;
+        }
+        
+        .chain-sequence {
+            margin-top: var(--spacing-xl);
+        }
+        
+        .chain-sequence h3 {
+            margin-bottom: var(--spacing-md);
+            color: var(--color-secondary);
+        }
+        
+        .chain-slots {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .chain-slot {
+            min-height: 60px;
+            padding: var(--spacing-md);
+            border: 2px dashed var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-hover-soft);
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .chain-slot::before {
+            content: attr(data-step);
+            position: absolute;
+            left: var(--spacing-md);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-secondary);
+        }
+        
+        .chain-slot.drag-over {
+            border-color: var(--color-primary);
+            background-color: var(--color-highlight-soft);
+        }
+        
+        .chain-slot.filled {
+            border-style: solid;
+            border-color: var(--color-success);
+            background-color: rgba(25, 100, 126, 0.08);
+        }
+        
+        .chain-slot.incorrect {
+            border-color: var(--color-error);
+            background-color: rgba(192, 57, 43, 0.08);
+        }
+        
+        .chain-slot .placed-item {
+            margin-left: 40px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: var(--color-bg);
+            border-radius: var(--border-radius-sm);
+            flex: 1;
+        }
+        
+        .chain-slot .remove-btn {
+            margin-left: auto;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background-color: var(--color-error);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+        }
+        
+        .distractor {
+            border-color: #f59e0b !important;
+        }
+        
+        .distractor.placed {
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>CO₂ Mineralisation Value Chain</h2>
+                <p class="instruction-text">Drag and drop the steps to build the CO₂ mineralisation value chain from flue gas to final material. One item does not belong.</p>
+                
+                <div class="value-chain-container">
+                    <div class="source-items" id="sourceItems">
+                        <div class="source-item" draggable="true" data-id="flue-gas" data-correct="1">Flue Gas Capture</div>
+                        <div class="source-item" draggable="true" data-id="purification" data-correct="2">CO₂ Purification</div>
+                        <div class="source-item" draggable="true" data-id="mineralisation" data-correct="3">Mineralisation Process</div>
+                        <div class="source-item" draggable="true" data-id="material-processing" data-correct="4">Material Processing</div>
+                        <div class="source-item distractor" draggable="true" data-id="combustion" data-correct="0">Combustion</div>
+                    </div>
+                    
+                    <div class="chain-sequence">
+                        <h3>Value Chain Sequence</h3>
+                        <div class="chain-slots" id="chainSlots">
+                            <div class="chain-slot" data-step="1" data-slot="1"></div>
+                            <div class="chain-slot" data-step="2" data-slot="2"></div>
+                            <div class="chain-slot" data-step="3" data-slot="3"></div>
+                            <div class="chain-slot" data-step="4" data-slot="4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'module1-value-chain';
+        const CORRECT_ORDER = ['flue-gas', 'purification', 'mineralisation', 'material-processing'];
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const sourceItems = $('#sourceItems');
+        const chainSlots = $('#chainSlots');
+        
+        let placedItems = {};
+        let draggedItem = null;
+        
+        function initDragDrop() {
+            const items = $$('.source-item');
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+            });
+            
+            const slots = $$('.chain-slot');
+            slots.forEach(slot => {
+                slot.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && !slot.classList.contains('filled')) {
+                        slot.classList.add('drag-over');
+                    }
+                });
+                
+                slot.addEventListener('dragleave', () => {
+                    slot.classList.remove('drag-over');
+                });
+                
+                slot.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    slot.classList.remove('drag-over');
+                    
+                    if (draggedItem && !slot.classList.contains('filled')) {
+                        const itemId = draggedItem.dataset.id;
+                        const slotId = slot.dataset.slot;
+                        
+                        // Remove from source if not already placed
+                        if (!draggedItem.classList.contains('placed')) {
+                            draggedItem.classList.add('placed');
+                        }
+                        
+                        // Place in slot
+                        const placedItem = document.createElement('div');
+                        placedItem.className = 'placed-item';
+                        placedItem.textContent = draggedItem.textContent;
+                        placedItem.dataset.id = itemId;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.textContent = '×';
+                        removeBtn.addEventListener('click', () => {
+                            removeFromSlot(slotId, itemId);
+                        });
+                        
+                        placedItem.appendChild(removeBtn);
+                        slot.appendChild(placedItem);
+                        slot.classList.add('filled');
+                        
+                        placedItems[slotId] = itemId;
+                    }
+                });
+            });
+        }
+        
+        function removeFromSlot(slotId, itemId) {
+            const slot = $(`.chain-slot[data-slot="${slotId}"]`);
+            if (slot) {
+                slot.innerHTML = '';
+                slot.classList.remove('filled', 'incorrect');
+                delete placedItems[slotId];
+            }
+            
+            const sourceItem = $(`.source-item[data-id="${itemId}"]`);
+            if (sourceItem) {
+                sourceItem.classList.remove('placed');
+            }
+        }
+        
+        function checkOrder() {
+            const allFilled = Object.keys(placedItems).length === 4;
+            if (!allFilled) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please place all 4 steps in the value chain.');
+                return;
+            }
+            
+            let correctCount = 0;
+            const slots = $$('.chain-slot');
+            
+            slots.forEach(slot => {
+                const slotId = slot.dataset.slot;
+                const placedId = placedItems[slotId];
+                const correctId = CORRECT_ORDER[parseInt(slotId) - 1];
+                
+                if (placedId === correctId) {
+                    correctCount++;
+                    slot.classList.remove('incorrect');
+                } else {
+                    slot.classList.add('incorrect');
+                }
+            });
+            
+            // Check for distractor
+            const hasDistractor = Object.values(placedItems).includes('combustion');
+            let feedbackText = '';
+            
+            if (hasDistractor) {
+                feedbackText = 'You included "Combustion" which does not belong in the value chain. ';
+            }
+            
+            const allCorrect = correctCount === 4 && !hasDistractor;
+            
+            if (allCorrect) {
+                feedbackText += 'Perfect! The value chain is correctly ordered: Flue Gas → Purification → Mineralisation → Material Processing.';
+                showFeedback(feedback, 'success', 'Correct!', feedbackText);
+            } else {
+                feedbackText += `You got ${correctCount} out of 4 steps in the correct position. Correct order: Flue Gas Capture → CO₂ Purification → Mineralisation Process → Material Processing.`;
+                showFeedback(feedback, 'error', 'Incorrect', feedbackText);
+            }
+            
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            checkBtn.disabled = true;
+            
+            // Disable drag and drop
+            $$('.source-item').forEach(item => {
+                item.draggable = false;
+            });
+            
+            saveCompletion(QUIZ_ID, { placedItems, correctCount, allCorrect, completed: true });
+        }
+        
+        function resetQuiz() {
+            placedItems = {};
+            const slots = $$('.chain-slot');
+            slots.forEach(slot => {
+                slot.innerHTML = '';
+                slot.classList.remove('filled', 'incorrect', 'drag-over');
+            });
+            
+            $$('.source-item').forEach(item => {
+                item.classList.remove('placed', 'dragging');
+                item.draggable = true;
+            });
+            
+            hideFeedback(feedback);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            checkBtn.disabled = false;
+            clearCompletion(QUIZ_ID);
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            initDragDrop();
+            
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.completed) {
+                placedItems = savedData.placedItems || {};
+                
+                // Restore placed items
+                Object.keys(placedItems).forEach(slotId => {
+                    const itemId = placedItems[slotId];
+                    const sourceItem = $(`.source-item[data-id="${itemId}"]`);
+                    const slot = $(`.chain-slot[data-slot="${slotId}"]`);
+                    
+                    if (sourceItem && slot) {
+                        sourceItem.classList.add('placed');
+                        
+                        const placedItem = document.createElement('div');
+                        placedItem.className = 'placed-item';
+                        placedItem.textContent = sourceItem.textContent;
+                        placedItem.dataset.id = itemId;
+                        
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-btn';
+                        removeBtn.textContent = '×';
+                        removeBtn.addEventListener('click', () => {
+                            removeFromSlot(slotId, itemId);
+                        });
+                        
+                        placedItem.appendChild(removeBtn);
+                        slot.appendChild(placedItem);
+                        slot.classList.add('filled');
+                        
+                        // Show feedback state
+                        const correctId = CORRECT_ORDER[parseInt(slotId) - 1];
+                        if (itemId !== correctId || itemId === 'combustion') {
+                            slot.classList.add('incorrect');
+                        }
+                    }
+                });
+                
+                // Show feedback
+                const correctCount = savedData.correctCount || 0;
+                const allCorrect = savedData.allCorrect || false;
+                const hasDistractor = Object.values(placedItems).includes('combustion');
+                
+                let feedbackText = '';
+                if (hasDistractor) {
+                    feedbackText = 'You included "Combustion" which does not belong in the value chain. ';
+                }
+                
+                if (allCorrect) {
+                    feedbackText += 'Perfect! The value chain is correctly ordered.';
+                    showFeedback(feedback, 'success', 'Correct!', feedbackText);
+                } else {
+                    feedbackText += `You got ${correctCount} out of 4 steps in the correct position.`;
+                    showFeedback(feedback, 'error', 'Incorrect', feedbackText);
+                }
+                
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+                checkBtn.disabled = true;
+                
+                $$('.source-item').forEach(item => {
+                    item.draggable = false;
+                });
+            }
+        });
+        
+        checkBtn.addEventListener('click', checkOrder);
+        resetBtn.addEventListener('click', resetQuiz);
+    </script>
+</body>
+</html>
+

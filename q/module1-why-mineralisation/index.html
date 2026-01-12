@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Mineralisation - Claim vs Reality</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+    <style>
+        .claim-item {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+        }
+        
+        .claim-text {
+            margin-bottom: var(--spacing-md);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .toggle-group {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .toggle-btn:hover:not(:disabled) {
+            border-color: var(--color-primary);
+            background-color: var(--color-hover-soft);
+        }
+        
+        .toggle-btn.selected {
+            border-color: var(--color-primary);
+            background-color: var(--color-primary);
+            color: #fff;
+        }
+        
+        .toggle-btn.selected.evidence {
+            background-color: var(--color-success);
+            border-color: var(--color-success);
+        }
+        
+        .toggle-btn.selected.partial {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+        }
+        
+        .toggle-btn.selected.misleading {
+            background-color: var(--color-error);
+            border-color: var(--color-error);
+        }
+        
+        .toggle-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .claim-item.completed {
+            border-color: var(--color-success);
+            background-color: rgba(25, 100, 126, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Claim vs Reality</h2>
+                <p class="instruction-text">Classify each statement as "Supported by evidence", "Partially true", or "Misleading claim".</p>
+                
+                <div id="claimsContainer">
+                    <div class="claim-item" data-id="claim1">
+                        <div class="claim-text">CO₂ mineralisation permanently stores carbon dioxide in solid form.</div>
+                        <div class="toggle-group">
+                            <button class="toggle-btn evidence" data-value="evidence">Supported by evidence</button>
+                            <button class="toggle-btn partial" data-value="partial">Partially true</button>
+                            <button class="toggle-btn misleading" data-value="misleading">Misleading claim</button>
+                        </div>
+                    </div>
+                    
+                    <div class="claim-item" data-id="claim2">
+                        <div class="claim-text">All industrial waste materials can be used for CO₂ mineralisation.</div>
+                        <div class="toggle-group">
+                            <button class="toggle-btn evidence" data-value="evidence">Supported by evidence</button>
+                            <button class="toggle-btn partial" data-value="partial">Partially true</button>
+                            <button class="toggle-btn misleading" data-value="misleading">Misleading claim</button>
+                        </div>
+                    </div>
+                    
+                    <div class="claim-item" data-id="claim3">
+                        <div class="claim-text">CO₂ mineralisation requires no energy input.</div>
+                        <div class="toggle-group">
+                            <button class="toggle-btn evidence" data-value="evidence">Supported by evidence</button>
+                            <button class="toggle-btn partial" data-value="partial">Partially true</button>
+                            <button class="toggle-btn misleading" data-value="misleading">Misleading claim</button>
+                        </div>
+                    </div>
+                    
+                    <div class="claim-item" data-id="claim4">
+                        <div class="claim-text">Mineralised CO₂ can be used as a construction material.</div>
+                        <div class="toggle-group">
+                            <button class="toggle-btn evidence" data-value="evidence">Supported by evidence</button>
+                            <button class="toggle-btn partial" data-value="partial">Partially true</button>
+                            <button class="toggle-btn misleading" data-value="misleading">Misleading claim</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'module1-why-mineralisation';
+        const CORRECT_ANSWERS = {
+            claim1: 'evidence',
+            claim2: 'partial',
+            claim3: 'misleading',
+            claim4: 'evidence'
+        };
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const claimsContainer = $('#claimsContainer');
+        
+        let answers = {};
+        
+        // Initialize toggle buttons
+        function initToggles() {
+            const claimItems = $$('.claim-item');
+            claimItems.forEach(item => {
+                const buttons = item.querySelectorAll('.toggle-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (btn.disabled) return;
+                        
+                        const claimId = item.dataset.id;
+                        const value = btn.dataset.value;
+                        
+                        // Remove selected from all buttons in this claim
+                        buttons.forEach(b => b.classList.remove('selected'));
+                        
+                        // Add selected to clicked button
+                        btn.classList.add('selected');
+                        
+                        // Store answer
+                        answers[claimId] = value;
+                        
+                        // Mark claim as having an answer
+                        item.classList.add('has-answer');
+                    });
+                });
+            });
+        }
+        
+        function checkAnswers() {
+            const allAnswered = Object.keys(CORRECT_ANSWERS).every(id => answers[id]);
+            if (!allAnswered) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please classify all statements before checking.');
+                return;
+            }
+            
+            let correctCount = 0;
+            const claimItems = $$('.claim-item');
+            
+            claimItems.forEach(item => {
+                const claimId = item.dataset.id;
+                const userAnswer = answers[claimId];
+                const correctAnswer = CORRECT_ANSWERS[claimId];
+                
+                if (userAnswer === correctAnswer) {
+                    correctCount++;
+                    item.classList.add('completed');
+                } else {
+                    item.classList.remove('completed');
+                }
+                
+                // Disable buttons
+                const buttons = item.querySelectorAll('.toggle-btn');
+                buttons.forEach(btn => btn.disabled = true);
+            });
+            
+            const total = Object.keys(CORRECT_ANSWERS).length;
+            const allCorrect = correctCount === total;
+            
+            let feedbackText = `You got ${correctCount} out of ${total} correct. `;
+            if (allCorrect) {
+                feedbackText += 'Excellent! All classifications are correct.';
+                showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+            } else {
+                feedbackText += 'Review the incorrect classifications. Correct answers: Claim 1=Evidence, Claim 2=Partial, Claim 3=Misleading, Claim 4=Evidence.';
+                showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+            }
+            
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            checkBtn.disabled = true;
+            
+            saveCompletion(QUIZ_ID, { answers, correctCount, total, completed: true });
+        }
+        
+        function resetQuiz() {
+            answers = {};
+            const claimItems = $$('.claim-item');
+            claimItems.forEach(item => {
+                item.classList.remove('has-answer', 'completed');
+                const buttons = item.querySelectorAll('.toggle-btn');
+                buttons.forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.disabled = false;
+                });
+            });
+            
+            hideFeedback(feedback);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            checkBtn.disabled = false;
+            clearCompletion(QUIZ_ID);
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            initToggles();
+            
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.completed) {
+                answers = savedData.answers || {};
+                
+                // Restore selections
+                Object.keys(answers).forEach(claimId => {
+                    const item = $(`.claim-item[data-id="${claimId}"]`);
+                    if (item) {
+                        const value = answers[claimId];
+                        const btn = item.querySelector(`.toggle-btn[data-value="${value}"]`);
+                        if (btn) {
+                            btn.classList.add('selected');
+                            item.classList.add('has-answer');
+                        }
+                    }
+                });
+                
+                // Show feedback
+                const correctCount = savedData.correctCount || 0;
+                const total = savedData.total || Object.keys(CORRECT_ANSWERS).length;
+                const allCorrect = correctCount === total;
+                
+                let feedbackText = `You got ${correctCount} out of ${total} correct. `;
+                if (allCorrect) {
+                    feedbackText += 'Excellent! All classifications are correct.';
+                    showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+                } else {
+                    feedbackText += 'Review the incorrect classifications.';
+                    showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+                }
+                
+                // Mark completed items
+                const claimItems = $$('.claim-item');
+                claimItems.forEach(item => {
+                    const claimId = item.dataset.id;
+                    const userAnswer = answers[claimId];
+                    const correctAnswer = CORRECT_ANSWERS[claimId];
+                    if (userAnswer === correctAnswer) {
+                        item.classList.add('completed');
+                    }
+                    
+                    // Disable buttons
+                    const buttons = item.querySelectorAll('.toggle-btn');
+                    buttons.forEach(btn => btn.disabled = true);
+                });
+                
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+                checkBtn.disabled = true;
+            }
+        });
+        
+        checkBtn.addEventListener('click', checkAnswers);
+        resetBtn.addEventListener('click', resetQuiz);
+    </script>
+</body>
+</html>
+
