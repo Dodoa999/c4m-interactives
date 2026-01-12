@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secondary Materials - Classification</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+    <style>
+        .classification-container {
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .source-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-md);
+            background-color: var(--color-hover-soft);
+            border-radius: var(--border-radius-md);
+        }
+        
+        .source-item {
+            padding: var(--spacing-md);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+            cursor: move;
+            transition: all var(--transition-base);
+            text-align: center;
+            font-size: var(--font-size-sm);
+        }
+        
+        .source-item:hover {
+            border-color: var(--color-primary);
+            background-color: var(--color-hover-soft);
+            box-shadow: 0 2px 4px var(--color-shadow);
+        }
+        
+        .source-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .source-item.placed {
+            opacity: 0.4;
+            cursor: default;
+        }
+        
+        .categories {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .category {
+            min-height: 200px;
+            padding: var(--spacing-md);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+        }
+        
+        .category h3 {
+            margin-bottom: var(--spacing-md);
+            color: var(--color-secondary);
+            font-size: var(--font-size-lg);
+        }
+        
+        .category.suitable h3 {
+            color: var(--color-success);
+        }
+        
+        .category.not-suitable h3 {
+            color: var(--color-error);
+        }
+        
+        .drop-zone {
+            min-height: 150px;
+            padding: var(--spacing-md);
+            border: 2px dashed var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-hover-soft);
+            transition: all var(--transition-base);
+        }
+        
+        .drop-zone.drag-over {
+            border-color: var(--color-primary);
+            background-color: var(--color-highlight-soft);
+        }
+        
+        .drop-zone.filled {
+            border-style: solid;
+        }
+        
+        .category.suitable .drop-zone.filled {
+            border-color: var(--color-success);
+            background-color: rgba(25, 100, 126, 0.08);
+        }
+        
+        .category.not-suitable .drop-zone.filled {
+            border-color: var(--color-error);
+            background-color: rgba(192, 57, 43, 0.08);
+        }
+        
+        .dropped-item {
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            background-color: var(--color-bg);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .dropped-item .remove-btn {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background-color: var(--color-error);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+        }
+        
+        .category.correct .drop-zone {
+            border-color: var(--color-success);
+            background-color: rgba(25, 100, 126, 0.12);
+        }
+        
+        .category.incorrect .drop-zone {
+            border-color: var(--color-error);
+            background-color: rgba(192, 57, 43, 0.12);
+        }
+        
+        @media (max-width: 640px) {
+            .categories {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Secondary Materials Classification</h2>
+                <p class="instruction-text">Drag and drop each material into the appropriate category: "Suitable secondary raw materials" or "Not suitable / primary materials".</p>
+                
+                <div class="classification-container">
+                    <div class="source-items" id="sourceItems">
+                        <div class="source-item" draggable="true" data-id="steel-slag" data-category="suitable">Steel Slag</div>
+                        <div class="source-item" draggable="true" data-id="fly-ash" data-category="suitable">Fly Ash</div>
+                        <div class="source-item" draggable="true" data-id="limestone" data-category="not-suitable">Limestone (quarried)</div>
+                        <div class="source-item" draggable="true" data-id="red-mud" data-category="suitable">Red Mud</div>
+                        <div class="source-item" draggable="true" data-id="cement-kiln-dust" data-category="suitable">Cement Kiln Dust</div>
+                        <div class="source-item" draggable="true" data-id="dolomite" data-category="not-suitable">Dolomite (mined)</div>
+                    </div>
+                    
+                    <div class="categories">
+                        <div class="category suitable" data-category="suitable">
+                            <h3>Suitable Secondary Raw Materials</h3>
+                            <div class="drop-zone" id="suitableZone"></div>
+                        </div>
+                        
+                        <div class="category not-suitable" data-category="not-suitable">
+                            <h3>Not Suitable / Primary Materials</h3>
+                            <div class="drop-zone" id="notSuitableZone"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'module1-secondary-materials';
+        const CORRECT_CATEGORIES = {
+            'steel-slag': 'suitable',
+            'fly-ash': 'suitable',
+            'limestone': 'not-suitable',
+            'red-mud': 'suitable',
+            'cement-kiln-dust': 'suitable',
+            'dolomite': 'not-suitable'
+        };
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const sourceItems = $('#sourceItems');
+        const suitableZone = $('#suitableZone');
+        const notSuitableZone = $('#notSuitableZone');
+        
+        let placedItems = {};
+        let draggedItem = null;
+        
+        function initDragDrop() {
+            const items = $$('.source-item');
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+            });
+            
+            [suitableZone, notSuitableZone].forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedItem) {
+                        zone.classList.add('drag-over');
+                    }
+                });
+                
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+                
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    
+                    if (draggedItem) {
+                        const itemId = draggedItem.dataset.id;
+                        const category = zone.id === 'suitableZone' ? 'suitable' : 'not-suitable';
+                        
+                        // Remove from previous category if placed
+                        if (placedItems[itemId]) {
+                            removeFromCategory(itemId);
+                        }
+                        
+                        // Place in new category
+                        draggedItem.classList.add('placed');
+                        placedItems[itemId] = category;
+                        
+                        const droppedItem = document.createElement('div');
+                        droppedItem.className = 'dropped-item';
+                        droppedItem.dataset.id = itemId;
+                        droppedItem.innerHTML = `
+                            <span>${draggedItem.textContent}</span>
+                            <button class="remove-btn">×</button>
+                        `;
+                        
+                        droppedItem.querySelector('.remove-btn').addEventListener('click', () => {
+                            removeFromCategory(itemId);
+                        });
+                        
+                        zone.appendChild(droppedItem);
+                        zone.classList.add('filled');
+                    }
+                });
+            });
+        }
+        
+        function removeFromCategory(itemId) {
+            const category = placedItems[itemId];
+            const zone = category === 'suitable' ? suitableZone : notSuitableZone;
+            const droppedItem = zone.querySelector(`.dropped-item[data-id="${itemId}"]`);
+            
+            if (droppedItem) {
+                droppedItem.remove();
+                if (zone.children.length === 0) {
+                    zone.classList.remove('filled');
+                }
+            }
+            
+            const sourceItem = $(`.source-item[data-id="${itemId}"]`);
+            if (sourceItem) {
+                sourceItem.classList.remove('placed');
+            }
+            
+            delete placedItems[itemId];
+        }
+        
+        function checkClassification() {
+            const allPlaced = Object.keys(CORRECT_CATEGORIES).every(id => placedItems[id]);
+            if (!allPlaced) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please classify all materials before checking.');
+                return;
+            }
+            
+            let correctCount = 0;
+            const categories = $$('.category');
+            
+            categories.forEach(category => {
+                const categoryType = category.dataset.category;
+                const zone = category.querySelector('.drop-zone');
+                const items = zone.querySelectorAll('.dropped-item');
+                
+                let categoryCorrect = true;
+                items.forEach(item => {
+                    const itemId = item.dataset.id;
+                    const correctCategory = CORRECT_CATEGORIES[itemId];
+                    
+                    if (correctCategory !== categoryType) {
+                        categoryCorrect = false;
+                    }
+                });
+                
+                if (categoryCorrect && items.length > 0) {
+                    correctCount += items.length;
+                    category.classList.add('correct');
+                    category.classList.remove('incorrect');
+                } else {
+                    category.classList.add('incorrect');
+                    category.classList.remove('correct');
+                }
+            });
+            
+            const total = Object.keys(CORRECT_CATEGORIES).length;
+            const allCorrect = correctCount === total;
+            
+            let feedbackText = '';
+            if (allCorrect) {
+                feedbackText = 'Perfect! All materials are correctly classified. Suitable secondary materials: Steel Slag, Fly Ash, Red Mud, Cement Kiln Dust. Not suitable: Limestone (quarried), Dolomite (mined).';
+                showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+            } else {
+                feedbackText = `You got ${correctCount} out of ${total} materials correctly classified. Review the categories.`;
+                showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+            }
+            
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            checkBtn.disabled = true;
+            
+            // Disable drag and drop
+            $$('.source-item').forEach(item => {
+                item.draggable = false;
+            });
+            
+            saveCompletion(QUIZ_ID, { placedItems, correctCount, total, allCorrect, completed: true });
+        }
+        
+        function resetQuiz() {
+            placedItems = {};
+            
+            [suitableZone, notSuitableZone].forEach(zone => {
+                zone.innerHTML = '';
+                zone.classList.remove('filled', 'drag-over');
+            });
+            
+            $$('.source-item').forEach(item => {
+                item.classList.remove('placed', 'dragging');
+                item.draggable = true;
+            });
+            
+            $$('.category').forEach(cat => {
+                cat.classList.remove('correct', 'incorrect');
+            });
+            
+            hideFeedback(feedback);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            checkBtn.disabled = false;
+            clearCompletion(QUIZ_ID);
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            initDragDrop();
+            
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.completed) {
+                placedItems = savedData.placedItems || {};
+                
+                // Restore placed items
+                Object.keys(placedItems).forEach(itemId => {
+                    const category = placedItems[itemId];
+                    const zone = category === 'suitable' ? suitableZone : notSuitableZone;
+                    const sourceItem = $(`.source-item[data-id="${itemId}"]`);
+                    
+                    if (sourceItem && zone) {
+                        sourceItem.classList.add('placed');
+                        
+                        const droppedItem = document.createElement('div');
+                        droppedItem.className = 'dropped-item';
+                        droppedItem.dataset.id = itemId;
+                        droppedItem.innerHTML = `
+                            <span>${sourceItem.textContent}</span>
+                            <button class="remove-btn">×</button>
+                        `;
+                        
+                        droppedItem.querySelector('.remove-btn').addEventListener('click', () => {
+                            removeFromCategory(itemId);
+                        });
+                        
+                        zone.appendChild(droppedItem);
+                        zone.classList.add('filled');
+                    }
+                });
+                
+                // Show feedback state
+                const correctCount = savedData.correctCount || 0;
+                const allCorrect = savedData.allCorrect || false;
+                
+                const categories = $$('.category');
+                categories.forEach(category => {
+                    const categoryType = category.dataset.category;
+                    const zone = category.querySelector('.drop-zone');
+                    const items = zone.querySelectorAll('.dropped-item');
+                    
+                    let categoryCorrect = true;
+                    items.forEach(item => {
+                        const itemId = item.dataset.id;
+                        const correctCategory = CORRECT_CATEGORIES[itemId];
+                        if (correctCategory !== categoryType) {
+                            categoryCorrect = false;
+                        }
+                    });
+                    
+                    if (categoryCorrect && items.length > 0) {
+                        category.classList.add('correct');
+                    } else if (items.length > 0) {
+                        category.classList.add('incorrect');
+                    }
+                });
+                
+                // Show feedback
+                let feedbackText = '';
+                if (allCorrect) {
+                    feedbackText = 'Perfect! All materials are correctly classified.';
+                    showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+                } else {
+                    feedbackText = `You got ${correctCount} out of ${Object.keys(CORRECT_CATEGORIES).length} materials correctly classified.`;
+                    showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+                }
+                
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+                checkBtn.disabled = true;
+                
+                $$('.source-item').forEach(item => {
+                    item.draggable = false;
+                });
+            }
+        });
+        
+        checkBtn.addEventListener('click', checkClassification);
+        resetBtn.addEventListener('click', resetQuiz);
+    </script>
+</body>
+</html>
+

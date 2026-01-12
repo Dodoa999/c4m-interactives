@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mythbuster - Scenario Classification</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+    <style>
+        .scenario-container {
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .scenario-item {
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-lg);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+        }
+        
+        .scenario-text {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background-color: var(--color-hover-soft);
+            border-radius: var(--border-radius-sm);
+            font-style: italic;
+            line-height: 1.8;
+        }
+        
+        .classification-options {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+        
+        .classification-btn {
+            flex: 1;
+            min-width: 180px;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            background-color: var(--color-bg);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .classification-btn:hover:not(:disabled) {
+            border-color: var(--color-primary);
+            background-color: var(--color-hover-soft);
+        }
+        
+        .classification-btn.selected {
+            border-color: var(--color-primary);
+            background-color: var(--color-primary);
+            color: #fff;
+        }
+        
+        .classification-btn.selected.carbon-negative {
+            background-color: var(--color-success);
+            border-color: var(--color-success);
+        }
+        
+        .classification-btn.selected.low-carbon {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+        }
+        
+        .classification-btn.selected.need-lca {
+            background-color: var(--color-secondary);
+            border-color: var(--color-secondary);
+        }
+        
+        .classification-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .scenario-item.completed {
+            border-color: var(--color-success);
+            background-color: rgba(25, 100, 126, 0.05);
+        }
+        
+        .scenario-item.incorrect {
+            border-color: var(--color-error);
+            background-color: rgba(192, 57, 43, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Scenario Classification</h2>
+                <p class="instruction-text">For each scenario, decide whether it is "Carbon-negative", "Low-carbon", or "Cannot be determined without LCA".</p>
+                
+                <div class="scenario-container" id="scenariosContainer">
+                    <div class="scenario-item" data-id="scenario1">
+                        <div class="scenario-text">
+                            A company uses waste steel slag and captured CO₂ from a nearby power plant to produce construction aggregates. The process uses renewable energy, and the final product replaces traditional quarried aggregates that require significant transportation.
+                        </div>
+                        <div class="classification-options">
+                            <button class="classification-btn carbon-negative" data-value="carbon-negative">Carbon-negative</button>
+                            <button class="classification-btn low-carbon" data-value="low-carbon">Low-carbon</button>
+                            <button class="classification-btn need-lca" data-value="need-lca">Cannot be determined without LCA</button>
+                        </div>
+                    </div>
+                    
+                    <div class="scenario-item" data-id="scenario2">
+                        <div class="scenario-text">
+                            A mineralisation facility processes CO₂ using natural gas for heating. The facility uses primary-mined materials and transports products over long distances to market.
+                        </div>
+                        <div class="classification-options">
+                            <button class="classification-btn carbon-negative" data-value="carbon-negative">Carbon-negative</button>
+                            <button class="classification-btn low-carbon" data-value="low-carbon">Low-carbon</button>
+                            <button class="classification-btn need-lca" data-value="need-lca">Cannot be determined without LCA</button>
+                        </div>
+                    </div>
+                    
+                    <div class="scenario-item" data-id="scenario3">
+                        <div class="scenario-text">
+                            A project uses industrial waste materials, captures CO₂ from flue gas, and produces materials that permanently store carbon while replacing high-carbon alternatives. The energy source and transportation distances are not specified.
+                        </div>
+                        <div class="classification-options">
+                            <button class="classification-btn carbon-negative" data-value="carbon-negative">Carbon-negative</button>
+                            <button class="classification-btn low-carbon" data-value="low-carbon">Low-carbon</button>
+                            <button class="classification-btn need-lca" data-value="need-lca">Cannot be determined without LCA</button>
+                        </div>
+                    </div>
+                    
+                    <div class="scenario-item" data-id="scenario4">
+                        <div class="scenario-text">
+                            A facility uses fly ash from coal power plants and captured CO₂. The process is powered by renewable energy, uses local materials, and the products replace cement in concrete, reducing overall carbon footprint significantly.
+                        </div>
+                        <div class="classification-options">
+                            <button class="classification-btn carbon-negative" data-value="carbon-negative">Carbon-negative</button>
+                            <button class="classification-btn low-carbon" data-value="low-carbon">Low-carbon</button>
+                            <button class="classification-btn need-lca" data-value="need-lca">Cannot be determined without LCA</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'module1-mythbuster';
+        const CORRECT_ANSWERS = {
+            scenario1: 'carbon-negative',
+            scenario2: 'need-lca',
+            scenario3: 'need-lca',
+            scenario4: 'carbon-negative'
+        };
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const scenariosContainer = $('#scenariosContainer');
+        
+        let answers = {};
+        
+        function initClassifications() {
+            const scenarioItems = $$('.scenario-item');
+            scenarioItems.forEach(item => {
+                const buttons = item.querySelectorAll('.classification-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (btn.disabled) return;
+                        
+                        const scenarioId = item.dataset.id;
+                        const value = btn.dataset.value;
+                        
+                        // Remove selected from all buttons in this scenario
+                        buttons.forEach(b => b.classList.remove('selected'));
+                        
+                        // Add selected to clicked button
+                        btn.classList.add('selected');
+                        
+                        // Store answer
+                        answers[scenarioId] = value;
+                    });
+                });
+            });
+        }
+        
+        function checkAnswers() {
+            const allAnswered = Object.keys(CORRECT_ANSWERS).every(id => answers[id]);
+            if (!allAnswered) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please classify all scenarios before checking.');
+                return;
+            }
+            
+            let correctCount = 0;
+            const scenarioItems = $$('.scenario-item');
+            
+            scenarioItems.forEach(item => {
+                const scenarioId = item.dataset.id;
+                const userAnswer = answers[scenarioId];
+                const correctAnswer = CORRECT_ANSWERS[scenarioId];
+                
+                if (userAnswer === correctAnswer) {
+                    correctCount++;
+                    item.classList.add('completed');
+                    item.classList.remove('incorrect');
+                } else {
+                    item.classList.add('incorrect');
+                    item.classList.remove('completed');
+                }
+                
+                // Disable buttons
+                const buttons = item.querySelectorAll('.classification-btn');
+                buttons.forEach(btn => btn.disabled = true);
+            });
+            
+            const total = Object.keys(CORRECT_ANSWERS).length;
+            const allCorrect = correctCount === total;
+            
+            let feedbackText = `You got ${correctCount} out of ${total} correct. `;
+            if (allCorrect) {
+                feedbackText += 'Excellent! All classifications are correct. Remember: Carbon-negative requires verified net negative emissions, low-carbon means reduced but positive emissions, and LCA is needed when key information is missing.';
+                showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+            } else {
+                feedbackText += 'Review the incorrect classifications. Correct answers: Scenario 1=Carbon-negative, Scenario 2=Need LCA, Scenario 3=Need LCA, Scenario 4=Carbon-negative.';
+                showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+            }
+            
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            checkBtn.disabled = true;
+            
+            saveCompletion(QUIZ_ID, { answers, correctCount, total, allCorrect, completed: true });
+        }
+        
+        function resetQuiz() {
+            answers = {};
+            const scenarioItems = $$('.scenario-item');
+            scenarioItems.forEach(item => {
+                item.classList.remove('completed', 'incorrect');
+                const buttons = item.querySelectorAll('.classification-btn');
+                buttons.forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.disabled = false;
+                });
+            });
+            
+            hideFeedback(feedback);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            checkBtn.disabled = false;
+            clearCompletion(QUIZ_ID);
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            initClassifications();
+            
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.completed) {
+                answers = savedData.answers || {};
+                
+                // Restore selections
+                Object.keys(answers).forEach(scenarioId => {
+                    const item = $(`.scenario-item[data-id="${scenarioId}"]`);
+                    if (item) {
+                        const value = answers[scenarioId];
+                        const btn = item.querySelector(`.classification-btn[data-value="${value}"]`);
+                        if (btn) {
+                            btn.classList.add('selected');
+                        }
+                    }
+                });
+                
+                // Show feedback state
+                const scenarioItems = $$('.scenario-item');
+                scenarioItems.forEach(item => {
+                    const scenarioId = item.dataset.id;
+                    const userAnswer = answers[scenarioId];
+                    const correctAnswer = CORRECT_ANSWERS[scenarioId];
+                    
+                    if (userAnswer === correctAnswer) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.add('incorrect');
+                    }
+                    
+                    // Disable buttons
+                    const buttons = item.querySelectorAll('.classification-btn');
+                    buttons.forEach(btn => btn.disabled = true);
+                });
+                
+                // Show feedback
+                const correctCount = savedData.correctCount || 0;
+                const allCorrect = savedData.allCorrect || false;
+                const total = savedData.total || Object.keys(CORRECT_ANSWERS).length;
+                
+                let feedbackText = `You got ${correctCount} out of ${total} correct. `;
+                if (allCorrect) {
+                    feedbackText += 'Excellent! All classifications are correct.';
+                    showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+                } else {
+                    feedbackText += 'Review the incorrect classifications.';
+                    showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+                }
+                
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+                checkBtn.disabled = true;
+            }
+        });
+        
+        checkBtn.addEventListener('click', checkAnswers);
+        resetBtn.addEventListener('click', resetQuiz);
+    </script>
+</body>
+</html>
+

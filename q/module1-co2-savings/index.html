@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO₂ Savings - Hotspot Quiz</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+    <style>
+        .hotspot-container {
+            position: relative;
+            margin: var(--spacing-lg) 0;
+            background-color: var(--color-hover-soft);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
+            min-height: 400px;
+        }
+        
+        .value-chain-diagram {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            background: linear-gradient(to right, 
+                rgba(246, 135, 31, 0.1) 0%,
+                rgba(246, 135, 31, 0.1) 20%,
+                rgba(25, 100, 126, 0.1) 20%,
+                rgba(25, 100, 126, 0.1) 40%,
+                rgba(246, 135, 31, 0.1) 40%,
+                rgba(246, 135, 31, 0.1) 60%,
+                rgba(25, 100, 126, 0.1) 60%,
+                rgba(25, 100, 126, 0.1) 80%,
+                rgba(246, 135, 31, 0.1) 80%,
+                rgba(246, 135, 31, 0.1) 100%);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        
+        .process-step {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            padding: var(--spacing-md);
+            background-color: var(--color-bg);
+            border-radius: var(--border-radius-sm);
+            position: relative;
+        }
+        
+        .process-step::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: var(--color-border);
+            border: 2px solid var(--color-bg);
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .process-step.clickable::before {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+        
+        .process-step.clicked::before {
+            background-color: var(--color-success);
+            border-color: var(--color-success);
+            box-shadow: 0 0 0 4px rgba(25, 100, 126, 0.2);
+        }
+        
+        .process-step.incorrect::before {
+            background-color: var(--color-error);
+            border-color: var(--color-error);
+        }
+        
+        .process-step h4 {
+            margin: var(--spacing-sm) 0 0 0;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .arrow {
+            flex-shrink: 0;
+            color: var(--color-secondary);
+            font-size: var(--font-size-xl);
+        }
+        
+        .selected-hotspots {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background-color: var(--color-hover-soft);
+            border-radius: var(--border-radius-md);
+        }
+        
+        .selected-hotspots h3 {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-md);
+            color: var(--color-secondary);
+        }
+        
+        .hotspot-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+        
+        .hotspot-tag {
+            padding: var(--spacing-xs) var(--spacing-md);
+            background-color: var(--color-bg);
+            border: var(--border-width) solid var(--color-primary);
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .hotspot-tag .remove-btn {
+            background: none;
+            border: none;
+            color: var(--color-primary);
+            cursor: pointer;
+            font-size: var(--font-size-lg);
+            line-height: 1;
+            padding: 0;
+            margin-left: var(--spacing-xs);
+        }
+        
+        @media (max-width: 640px) {
+            .value-chain-diagram {
+                flex-direction: column;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>CO₂ Savings in the Value Chain</h2>
+                <p class="instruction-text">Click on all locations in the value chain where CO₂ savings occur. Multiple correct hotspots.</p>
+                
+                <div class="hotspot-container">
+                    <div class="value-chain-diagram" id="valueChainDiagram">
+                        <div class="process-step clickable" data-id="capture" data-correct="true">
+                            <h4>CO₂ Capture</h4>
+                        </div>
+                        <span class="arrow">→</span>
+                        <div class="process-step clickable" data-id="purification" data-correct="true">
+                            <h4>Purification</h4>
+                        </div>
+                        <span class="arrow">→</span>
+                        <div class="process-step" data-id="transport" data-correct="false">
+                            <h4>Transport</h4>
+                        </div>
+                        <span class="arrow">→</span>
+                        <div class="process-step clickable" data-id="mineralisation" data-correct="true">
+                            <h4>Mineralisation</h4>
+                        </div>
+                        <span class="arrow">→</span>
+                        <div class="process-step clickable" data-id="material-use" data-correct="true">
+                            <h4>Material Use</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="selected-hotspots" id="selectedHotspots" style="display: none;">
+                        <h3>Selected Locations:</h3>
+                        <div class="hotspot-list" id="hotspotList"></div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'module1-co2-savings';
+        const CORRECT_HOTSPOTS = ['capture', 'purification', 'mineralisation', 'material-use'];
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const valueChainDiagram = $('#valueChainDiagram');
+        const selectedHotspots = $('#selectedHotspots');
+        const hotspotList = $('#hotspotList');
+        
+        let selectedHotspotIds = [];
+        
+        function initHotspots() {
+            const steps = $$('.process-step.clickable');
+            steps.forEach(step => {
+                step.addEventListener('click', () => {
+                    if (step.classList.contains('locked')) return;
+                    
+                    const hotspotId = step.dataset.id;
+                    const index = selectedHotspotIds.indexOf(hotspotId);
+                    
+                    if (index > -1) {
+                        // Deselect
+                        selectedHotspotIds.splice(index, 1);
+                        step.classList.remove('clicked');
+                    } else {
+                        // Select
+                        selectedHotspotIds.push(hotspotId);
+                        step.classList.add('clicked');
+                    }
+                    
+                    updateHotspotList();
+                });
+            });
+        }
+        
+        function updateHotspotList() {
+            if (selectedHotspotIds.length === 0) {
+                selectedHotspots.style.display = 'none';
+                return;
+            }
+            
+            selectedHotspots.style.display = 'block';
+            hotspotList.innerHTML = '';
+            
+            selectedHotspotIds.forEach(id => {
+                const step = $(`.process-step[data-id="${id}"]`);
+                if (step) {
+                    const tag = document.createElement('div');
+                    tag.className = 'hotspot-tag';
+                    tag.innerHTML = `
+                        <span>${step.querySelector('h4').textContent}</span>
+                        <button class="remove-btn" data-id="${id}">×</button>
+                    `;
+                    
+                    tag.querySelector('.remove-btn').addEventListener('click', () => {
+                        const step = $(`.process-step[data-id="${id}"]`);
+                        if (step) {
+                            step.classList.remove('clicked');
+                            selectedHotspotIds = selectedHotspotIds.filter(hid => hid !== id);
+                            updateHotspotList();
+                        }
+                    });
+                    
+                    hotspotList.appendChild(tag);
+                }
+            });
+        }
+        
+        function checkHotspots() {
+            if (selectedHotspotIds.length === 0) {
+                showFeedback(feedback, 'error', 'No selections', 'Please click on at least one location where CO₂ savings occur.');
+                return;
+            }
+            
+            // Check for correct and incorrect selections
+            const correctSelections = selectedHotspotIds.filter(id => CORRECT_HOTSPOTS.includes(id));
+            const incorrectSelections = selectedHotspotIds.filter(id => !CORRECT_HOTSPOTS.includes(id));
+            const missingSelections = CORRECT_HOTSPOTS.filter(id => !selectedHotspotIds.includes(id));
+            
+            // Mark visual feedback
+            const steps = $$('.process-step');
+            steps.forEach(step => {
+                const id = step.dataset.id;
+                const isCorrect = CORRECT_HOTSPOTS.includes(id);
+                const isSelected = selectedHotspotIds.includes(id);
+                
+                if (isSelected) {
+                    if (isCorrect) {
+                        step.classList.add('clicked');
+                        step.classList.remove('incorrect');
+                    } else {
+                        step.classList.add('incorrect');
+                        step.classList.remove('clicked');
+                    }
+                } else if (isCorrect) {
+                    // Mark missing correct hotspots
+                    step.style.opacity = '0.5';
+                }
+            });
+            
+            const allCorrect = correctSelections.length === CORRECT_HOTSPOTS.length && incorrectSelections.length === 0;
+            
+            let feedbackText = '';
+            if (allCorrect) {
+                feedbackText = 'Perfect! You identified all locations where CO₂ savings occur: Capture (avoiding emissions), Purification (efficiency), Mineralisation (permanent storage), and Material Use (substituting carbon-intensive materials).';
+                showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+            } else {
+                feedbackText = `You selected ${correctSelections.length} out of ${CORRECT_HOTSPOTS.length} correct locations. `;
+                if (incorrectSelections.length > 0) {
+                    feedbackText += 'Some selected locations do not represent CO₂ savings. ';
+                }
+                if (missingSelections.length > 0) {
+                    feedbackText += 'You missed some locations where CO₂ savings occur.';
+                }
+                showFeedback(feedback, 'error', 'Incomplete', feedbackText);
+            }
+            
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            checkBtn.disabled = true;
+            
+            // Lock all hotspots
+            $$('.process-step').forEach(step => {
+                step.classList.add('locked');
+            });
+            
+            saveCompletion(QUIZ_ID, { 
+                selectedHotspotIds, 
+                correctSelections, 
+                incorrectSelections, 
+                missingSelections,
+                allCorrect,
+                completed: true 
+            });
+        }
+        
+        function resetQuiz() {
+            selectedHotspotIds = [];
+            
+            $$('.process-step').forEach(step => {
+                step.classList.remove('clicked', 'incorrect', 'locked');
+                step.style.opacity = '';
+            });
+            
+            selectedHotspots.style.display = 'none';
+            hotspotList.innerHTML = '';
+            
+            hideFeedback(feedback);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            checkBtn.disabled = false;
+            clearCompletion(QUIZ_ID);
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            initHotspots();
+            
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.completed) {
+                selectedHotspotIds = savedData.selectedHotspotIds || [];
+                
+                // Restore selections
+                selectedHotspotIds.forEach(id => {
+                    const step = $(`.process-step[data-id="${id}"]`);
+                    if (step) {
+                        const isCorrect = CORRECT_HOTSPOTS.includes(id);
+                        if (isCorrect) {
+                            step.classList.add('clicked');
+                        } else {
+                            step.classList.add('incorrect');
+                        }
+                    }
+                });
+                
+                // Mark missing correct hotspots
+                CORRECT_HOTSPOTS.forEach(id => {
+                    if (!selectedHotspotIds.includes(id)) {
+                        const step = $(`.process-step[data-id="${id}"]`);
+                        if (step) step.style.opacity = '0.5';
+                    }
+                });
+                
+                updateHotspotList();
+                
+                // Show feedback
+                const allCorrect = savedData.allCorrect || false;
+                let feedbackText = '';
+                
+                if (allCorrect) {
+                    feedbackText = 'Perfect! You identified all locations where CO₂ savings occur.';
+                    showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+                } else {
+                    const correctCount = savedData.correctSelections?.length || 0;
+                    feedbackText = `You selected ${correctCount} out of ${CORRECT_HOTSPOTS.length} correct locations.`;
+                    showFeedback(feedback, 'error', 'Incomplete', feedbackText);
+                }
+                
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+                checkBtn.disabled = true;
+                
+                $$('.process-step').forEach(step => {
+                    step.classList.add('locked');
+                });
+            }
+        });
+        
+        checkBtn.addEventListener('click', checkHotspots);
+        resetBtn.addEventListener('click', resetQuiz);
+    </script>
+</body>
+</html>
+

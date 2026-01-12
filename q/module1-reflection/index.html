@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflection</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+    <style>
+        .reflection-prompt {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background-color: var(--color-hover-soft);
+            border-radius: var(--border-radius-md);
+            font-style: italic;
+            line-height: 1.8;
+        }
+        
+        .reflection-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: var(--spacing-md);
+            border: var(--border-width) solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            font-family: var(--font-family);
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            resize: vertical;
+            transition: all var(--transition-base);
+        }
+        
+        .reflection-textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-highlight-soft);
+        }
+        
+        .reflection-textarea:disabled {
+            background-color: var(--color-hover-soft);
+            cursor: not-allowed;
+        }
+        
+        .char-count {
+            text-align: right;
+            color: var(--color-text-light);
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: var(--color-secondary);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            transition: all var(--transition-base);
+        }
+        
+        .copy-btn:hover:not(:disabled) {
+            background-color: var(--color-secondary-hover);
+        }
+        
+        .copy-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .copy-success {
+            display: none;
+            color: var(--color-success);
+            font-size: var(--font-size-sm);
+            margin-left: var(--spacing-sm);
+        }
+        
+        .copy-success.show {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Reflection</h2>
+                <p class="instruction-text">Take a moment to reflect on what you've learned about CO₂ mineralisation.</p>
+                
+                <div class="reflection-prompt">
+                    Where do you see the biggest potential of CO₂ mineralisation in the built environment, and what do you think are its main limitations?
+                </div>
+                
+                <textarea 
+                    class="reflection-textarea" 
+                    id="reflectionTextarea" 
+                    placeholder="Share your thoughts here..."
+                ></textarea>
+                <div class="char-count" id="charCount">0 characters</div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="saveBtn">Save Reflection</button>
+                    <button class="copy-btn" id="copyBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy to clipboard
+                    </button>
+                    <span class="copy-success" id="copySuccess">Copied!</span>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'module1-reflection';
+        
+        const saveBtn = $('#saveBtn');
+        const copyBtn = $('#copyBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const reflectionTextarea = $('#reflectionTextarea');
+        const charCount = $('#charCount');
+        const copySuccess = $('#copySuccess');
+        
+        function updateCharCount() {
+            const count = reflectionTextarea.value.length;
+            charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+        }
+        
+        function saveReflection() {
+            const text = reflectionTextarea.value.trim();
+            
+            if (text.length === 0) {
+                showFeedback(feedback, 'error', 'Empty reflection', 'Please write your reflection before saving.');
+                return;
+            }
+            
+            saveCompletion(QUIZ_ID, { 
+                reflection: text,
+                characterCount: text.length,
+                completed: true 
+            });
+            
+            showFeedback(feedback, 'success', 'Saved!', 'Your reflection has been saved to localStorage.');
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            reflectionTextarea.disabled = true;
+            saveBtn.disabled = true;
+        }
+        
+        function copyToClipboard() {
+            const text = reflectionTextarea.value.trim();
+            
+            if (text.length === 0) {
+                showFeedback(feedback, 'error', 'Empty reflection', 'Nothing to copy. Please write your reflection first.');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                copySuccess.classList.add('show');
+                setTimeout(() => {
+                    copySuccess.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                // Fallback for older browsers
+                reflectionTextarea.select();
+                document.execCommand('copy');
+                copySuccess.classList.add('show');
+                setTimeout(() => {
+                    copySuccess.classList.remove('show');
+                }, 2000);
+            });
+        }
+        
+        function resetReflection() {
+            reflectionTextarea.value = '';
+            reflectionTextarea.disabled = false;
+            updateCharCount();
+            hideFeedback(feedback);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            saveBtn.disabled = false;
+            clearCompletion(QUIZ_ID);
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            reflectionTextarea.addEventListener('input', updateCharCount);
+            
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.completed) {
+                reflectionTextarea.value = savedData.reflection || '';
+                updateCharCount();
+                
+                showFeedback(feedback, 'success', 'Reflection loaded', 'Your saved reflection has been loaded.');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+                reflectionTextarea.disabled = true;
+                saveBtn.disabled = true;
+            } else {
+                updateCharCount();
+            }
+        });
+        
+        saveBtn.addEventListener('click', saveReflection);
+        copyBtn.addEventListener('click', copyToClipboard);
+        resetBtn.addEventListener('click', resetReflection);
+    </script>
+</body>
+</html>
+
