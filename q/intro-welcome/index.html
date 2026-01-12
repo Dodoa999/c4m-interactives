@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lesson 1 – Welcome to Carbon4Minerals</title>
+    <title>Welcome to Carbon4Minerals</title>
     <link rel="stylesheet" href="../../assets/styles.css">
 </head>
 <body>
@@ -12,29 +12,31 @@
             <div class="card">
                 <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
                 
-                <h2>Quiz Question</h2>
-                <p class="question-text">What is the main purpose of this training course?</p>
+                <h2>Exercise</h2>
+                <p class="instruction-text">Select the best answer to complete the statement.</p>
+                
+                <p class="question-text">Carbon4Minerals is primarily focused on:</p>
                 
                 <ul class="quiz-options" id="quizOptions">
                     <li class="quiz-option">
                         <input type="radio" name="answer" id="answerA" value="A">
                         <label for="answerA">
                             <span class="quiz-option-letter">A)</span>
-                            <span class="quiz-option-text">To provide comprehensive training on carbon capture and storage technologies for mineral processing industries</span>
+                            <span class="quiz-option-text">Training professionals in carbon capture and storage for mineral processing</span>
                         </label>
                     </li>
                     <li class="quiz-option">
                         <input type="radio" name="answer" id="answerB" value="B">
                         <label for="answerB">
                             <span class="quiz-option-letter">B)</span>
-                            <span class="quiz-option-text">To teach basic chemistry principles</span>
+                            <span class="quiz-option-text">General environmental education</span>
                         </label>
                     </li>
                     <li class="quiz-option">
                         <input type="radio" name="answer" id="answerC" value="C">
                         <label for="answerC">
                             <span class="quiz-option-letter">C)</span>
-                            <span class="quiz-option-text">To introduce general environmental science concepts</span>
+                            <span class="quiz-option-text">Basic chemistry principles</span>
                         </label>
                     </li>
                 </ul>
@@ -54,7 +56,7 @@
     
     <script src="../../assets/app.js"></script>
     <script>
-        const QUIZ_ID = 'intro-purpose';
+        const QUIZ_ID = 'intro-welcome';
         const CORRECT_ANSWER = 'A';
         
         const checkBtn = $('#checkBtn');
@@ -74,10 +76,10 @@
                 }
                 
                 if (savedData.isCorrect) {
-                    showFeedback(feedback, 'success', 'Correct!', 'Well done! This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                    showFeedback(feedback, 'success', 'Correct!', 'Well done! Carbon4Minerals is specifically designed to train professionals in carbon capture and storage technologies for the mineral processing industry.');
                     updateStatusBadge(statusBadge, 'completed', 'Completed');
                 } else {
-                    showFeedback(feedback, 'error', 'Incorrect', 'The correct answer is A. This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                    showFeedback(feedback, 'error', 'Incorrect', 'The correct answer is A. Carbon4Minerals is specifically designed to train professionals in carbon capture and storage technologies for the mineral processing industry.');
                     updateStatusBadge(statusBadge, 'completed', 'Completed');
                 }
                 
@@ -106,10 +108,10 @@
             
             // Show feedback
             if (isCorrect) {
-                showFeedback(feedback, 'success', 'Correct!', 'Well done! This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                showFeedback(feedback, 'success', 'Correct!', 'Well done! Carbon4Minerals is specifically designed to train professionals in carbon capture and storage technologies for the mineral processing industry.');
                 updateStatusBadge(statusBadge, 'completed', 'Completed');
             } else {
-                showFeedback(feedback, 'error', 'Incorrect', 'The correct answer is A. This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                showFeedback(feedback, 'error', 'Incorrect', 'The correct answer is A. Carbon4Minerals is specifically designed to train professionals in carbon capture and storage technologies for the mineral processing industry.');
                 updateStatusBadge(statusBadge, 'completed', 'Completed');
             }
             

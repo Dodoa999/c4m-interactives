@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Objectives</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Exercise</h2>
+                <p class="instruction-text">Select all that apply. Choose the learning objectives for this course.</p>
+                
+                <p class="question-text">Which of the following are key learning objectives for Carbon4Minerals?</p>
+                
+                <ul class="quiz-options" id="quizOptions">
+                    <li class="quiz-option">
+                        <input type="checkbox" name="objective" id="obj1" value="obj1">
+                        <label for="obj1">
+                            <span class="quiz-option-text">Understand carbon capture technologies in mineral processing</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="checkbox" name="objective" id="obj2" value="obj2">
+                        <label for="obj2">
+                            <span class="quiz-option-text">Learn to implement CCS solutions in industrial settings</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="checkbox" name="objective" id="obj3" value="obj3">
+                        <label for="obj3">
+                            <span class="quiz-option-text">Master general chemistry principles</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="checkbox" name="objective" id="obj4" value="obj4">
+                        <label for="obj4">
+                            <span class="quiz-option-text">Evaluate environmental impact and sustainability</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="checkbox" name="objective" id="obj5" value="obj5">
+                        <label for="obj5">
+                            <span class="quiz-option-text">Study basic physics concepts</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="checkbox" name="objective" id="obj6" value="obj6">
+                        <label for="obj6">
+                            <span class="quiz-option-text">Apply best practices for carbon management</span>
+                        </label>
+                    </li>
+                </ul>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'intro-learning-objectives';
+        const CORRECT_ANSWERS = ['obj1', 'obj2', 'obj4']; // 3 correct out of 6
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const checkboxes = $$('input[type="checkbox"]');
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.selected) {
+                savedData.selected.forEach(value => {
+                    const checkbox = $(`input[value="${value}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+                
+                if (savedData.completed) {
+                    const isCorrect = checkAnswers(savedData.selected);
+                    if (isCorrect) {
+                        showFeedback(feedback, 'success', 'Correct!', 'You selected all the correct learning objectives. Well done!');
+                    } else {
+                        const correctCount = getCorrectCount(savedData.selected);
+                        showFeedback(feedback, 'error', 'Incorrect', `You selected ${correctCount} out of ${CORRECT_ANSWERS.length} correct answers. The correct objectives are: Understanding carbon capture technologies, Learning to implement CCS solutions, and Evaluating environmental impact.`);
+                    }
+                    updateStatusBadge(statusBadge, 'completed', 'Completed');
+                    lockInputs();
+                }
+            }
+        });
+        
+        function getSelectedAnswers() {
+            return Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+        }
+        
+        function getCorrectCount(selected) {
+            return selected.filter(val => CORRECT_ANSWERS.includes(val)).length;
+        }
+        
+        function checkAnswers(selected) {
+            if (selected.length !== CORRECT_ANSWERS.length) {
+                return false;
+            }
+            return CORRECT_ANSWERS.every(answer => selected.includes(answer));
+        }
+        
+        function lockInputs() {
+            checkboxes.forEach(checkbox => {
+                checkbox.disabled = true;
+            });
+            checkBtn.disabled = true;
+        }
+        
+        function unlockInputs() {
+            checkboxes.forEach(checkbox => {
+                checkbox.disabled = false;
+            });
+            checkBtn.disabled = false;
+        }
+        
+        // Check button handler
+        checkBtn.addEventListener('click', () => {
+            const selected = getSelectedAnswers();
+            
+            if (selected.length === 0) {
+                showFeedback(feedback, 'error', 'No selection', 'Please select at least one learning objective.');
+                return;
+            }
+            
+            const isCorrect = checkAnswers(selected);
+            const correctCount = getCorrectCount(selected);
+            
+            saveCompletion(QUIZ_ID, { selected, isCorrect, correctCount });
+            
+            if (isCorrect) {
+                showFeedback(feedback, 'success', 'Correct!', 'You selected all the correct learning objectives. Well done!');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            } else {
+                showFeedback(feedback, 'error', 'Incorrect', `You selected ${correctCount} out of ${CORRECT_ANSWERS.length} correct answers. The correct objectives are: Understanding carbon capture technologies, Learning to implement CCS solutions, and Evaluating environmental impact.`);
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            }
+            
+            lockInputs();
+        });
+        
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            hideFeedback(feedback);
+            clearCompletion(QUIZ_ID);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            unlockInputs();
+        });
+    </script>
+</body>
+</html>
+

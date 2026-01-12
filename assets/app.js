@@ -88,3 +88,35 @@ function updateStatusBadge(badge, status, text) {
     badge.textContent = text;
 }
 
+/**
+ * Save completion data to localStorage
+ * @param {string} QUIZ_ID - Unique identifier for the quiz
+ * @param {Object} payload - Completion data (can be any structure)
+ */
+function saveCompletion(QUIZ_ID, payload) {
+    const data = {
+        ...payload,
+        timestamp: new Date().toISOString(),
+        completed: true
+    };
+    localStorage.setItem(`completion_${QUIZ_ID}`, JSON.stringify(data));
+}
+
+/**
+ * Load completion data from localStorage
+ * @param {string} QUIZ_ID - Unique identifier for the quiz
+ * @returns {Object|null} - Completion data or null if not found
+ */
+function loadCompletion(QUIZ_ID) {
+    const data = localStorage.getItem(`completion_${QUIZ_ID}`);
+    return data ? JSON.parse(data) : null;
+}
+
+/**
+ * Clear completion data from localStorage
+ * @param {string} QUIZ_ID - Unique identifier for the quiz
+ */
+function clearCompletion(QUIZ_ID) {
+    localStorage.removeItem(`completion_${QUIZ_ID}`);
+}
+

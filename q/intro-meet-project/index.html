@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meet the Project</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Exercise</h2>
+                <p class="instruction-text">Match each project aspect to its description by dragging items to the correct zones, or click to place them.</p>
+                
+                <div class="drag-container">
+                    <div class="drag-source">
+                        <h3>Items</h3>
+                        <div id="sourceItems">
+                            <div class="drag-item" draggable="true" data-id="co2" id="item-co2">
+                                <img src="../../assets/img/co2.svg" alt="CO2" width="24" height="24">
+                                <span>CO₂ Capture</span>
+                            </div>
+                            <div class="drag-item" draggable="true" data-id="mineral" id="item-mineral">
+                                <img src="../../assets/img/mineral.svg" alt="Mineral" width="24" height="24">
+                                <span>Mineral Processing</span>
+                            </div>
+                            <div class="drag-item" draggable="true" data-id="value" id="item-value">
+                                <img src="../../assets/img/value-chain.svg" alt="Value Chain" width="24" height="24">
+                                <span>Value Chain</span>
+                            </div>
+                            <div class="drag-item" draggable="true" data-id="training" id="item-training">
+                                <span>📚</span>
+                                <span>Training Platform</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="drag-target">
+                        <h3>Match to Descriptions</h3>
+                        <div class="drag-zone" data-target="co2" id="zone-co2">
+                            <strong>Step 1:</strong> Technology that removes carbon dioxide from industrial emissions
+                        </div>
+                        <div class="drag-zone" data-target="mineral" id="zone-mineral">
+                            <strong>Step 2:</strong> Industry sector focused on extracting and refining raw materials
+                        </div>
+                        <div class="drag-zone" data-target="value" id="zone-value">
+                            <strong>Step 3:</strong> Complete process from raw materials to finished products
+                        </div>
+                        <div class="drag-zone" data-target="training" id="zone-training">
+                            <strong>Step 4:</strong> Educational system for professional development
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'intro-meet-project';
+        const CORRECT_MATCHES = {
+            'co2': 'zone-co2',
+            'mineral': 'zone-mineral',
+            'value': 'zone-value',
+            'training': 'zone-training'
+        };
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        let draggedElement = null;
+        let matches = {};
+        
+        // Drag and drop handlers
+        const dragItems = $$('.drag-item');
+        const dropZones = $$('.drag-zone');
+        
+        dragItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                draggedElement = item;
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                draggedElement = null;
+            });
+            
+            // Click-to-place fallback
+            item.addEventListener('click', () => {
+                if (item.parentElement.classList.contains('drag-source')) {
+                    // Find first empty zone
+                    const emptyZone = Array.from(dropZones).find(zone => !zone.querySelector('.drag-item'));
+                    if (emptyZone) {
+                        placeItem(item, emptyZone);
+                    }
+                }
+            });
+        });
+        
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (draggedElement && !zone.querySelector('.drag-item')) {
+                    zone.classList.add('drag-over');
+                }
+            });
+            
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                if (draggedElement && !zone.querySelector('.drag-item')) {
+                    placeItem(draggedElement, zone);
+                }
+            });
+            
+            // Click-to-place on zone
+            zone.addEventListener('click', () => {
+                if (!zone.querySelector('.drag-item')) {
+                    // Find first unplaced item
+                    const unplacedItem = Array.from(dragItems).find(item => 
+                        item.parentElement.classList.contains('drag-source')
+                    );
+                    if (unplacedItem) {
+                        placeItem(unplacedItem, zone);
+                    }
+                }
+            });
+        });
+        
+        function placeItem(item, zone) {
+            const itemId = item.dataset.id;
+            const zoneId = zone.id;
+            matches[zoneId] = itemId;
+            zone.appendChild(item);
+            zone.classList.add('filled');
+            updateMatches();
+        }
+        
+        function updateMatches() {
+            dropZones.forEach(zone => {
+                const item = zone.querySelector('.drag-item');
+                if (item) {
+                    const itemId = item.dataset.id;
+                    const expectedTarget = CORRECT_MATCHES[itemId];
+                    if (zone.id === expectedTarget) {
+                        zone.classList.remove('incorrect');
+                    } else {
+                        zone.classList.add('incorrect');
+                    }
+                }
+            });
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.matches) {
+                matches = savedData.matches;
+                Object.keys(matches).forEach(zoneId => {
+                    const itemId = matches[zoneId];
+                    const item = $(`#item-${itemId}`);
+                    const zone = $(`#${zoneId}`);
+                    if (item && zone) {
+                        zone.appendChild(item);
+                        zone.classList.add('filled');
+                    }
+                });
+                updateMatches();
+                
+                if (savedData.completed) {
+                    const isCorrect = checkAnswers();
+                    if (isCorrect) {
+                        showFeedback(feedback, 'success', 'Correct!', 'All items are matched correctly. Well done!');
+                    } else {
+                        showFeedback(feedback, 'error', 'Some matches are incorrect', 'Please review your matches and try again.');
+                    }
+                    updateStatusBadge(statusBadge, 'completed', 'Completed');
+                    lockInputs();
+                }
+            }
+        });
+        
+        function checkAnswers() {
+            let allCorrect = true;
+            Object.keys(CORRECT_MATCHES).forEach(itemId => {
+                const expectedZone = CORRECT_MATCHES[itemId];
+                if (matches[expectedZone] !== itemId) {
+                    allCorrect = false;
+                }
+            });
+            return allCorrect && Object.keys(matches).length === 4;
+        }
+        
+        function lockInputs() {
+            dragItems.forEach(item => {
+                item.draggable = false;
+                item.style.cursor = 'not-allowed';
+            });
+            dropZones.forEach(zone => {
+                zone.style.pointerEvents = 'none';
+            });
+        }
+        
+        function unlockInputs() {
+            dragItems.forEach(item => {
+                item.draggable = true;
+                item.style.cursor = 'move';
+            });
+            dropZones.forEach(zone => {
+                zone.style.pointerEvents = 'auto';
+            });
+        }
+        
+        // Check button handler
+        checkBtn.addEventListener('click', () => {
+            if (Object.keys(matches).length < 4) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please match all 4 items before checking.');
+                return;
+            }
+            
+            const isCorrect = checkAnswers();
+            saveCompletion(QUIZ_ID, { matches, isCorrect });
+            
+            if (isCorrect) {
+                showFeedback(feedback, 'success', 'Correct!', 'All items are matched correctly. Well done!');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            } else {
+                showFeedback(feedback, 'error', 'Some matches are incorrect', 'Please review your matches. The correct matches are: CO₂ Capture → Step 1, Mineral Processing → Step 2, Value Chain → Step 3, Training Platform → Step 4.');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            }
+            
+            lockInputs();
+        });
+        
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            matches = {};
+            const sourceContainer = $('#sourceItems');
+            dragItems.forEach(item => {
+                sourceContainer.appendChild(item);
+            });
+            dropZones.forEach(zone => {
+                zone.classList.remove('filled', 'incorrect', 'drag-over');
+            });
+            hideFeedback(feedback);
+            clearCompletion(QUIZ_ID);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            unlockInputs();
+        });
+    </script>
+</body>
+</html>
+

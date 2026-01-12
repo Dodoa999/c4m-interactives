@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Baseline Quiz</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Exercise</h2>
+                <p class="instruction-text">Complete all three questions below, then click "Check all" to validate your answers.</p>
+                
+                <!-- Question 1: Single Choice -->
+                <div class="quiz-section">
+                    <h3>Question 1</h3>
+                    <p class="question-text">What is the primary focus of Carbon4Minerals?</p>
+                    
+                    <ul class="quiz-options">
+                        <li class="quiz-option">
+                            <input type="radio" name="q1" id="q1a" value="A">
+                            <label for="q1a">
+                                <span class="quiz-option-letter">A)</span>
+                                <span class="quiz-option-text">Carbon capture in mineral processing</span>
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q1" id="q1b" value="B">
+                            <label for="q1b">
+                                <span class="quiz-option-letter">B)</span>
+                                <span class="quiz-option-text">General environmental science</span>
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q1" id="q1c" value="C">
+                            <label for="q1c">
+                                <span class="quiz-option-letter">C)</span>
+                                <span class="quiz-option-text">Renewable energy systems</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Question 2: Multi-select -->
+                <div class="quiz-section">
+                    <h3>Question 2</h3>
+                    <p class="question-text">Which of the following are key components of CCS? (Select all that apply)</p>
+                    
+                    <ul class="quiz-options">
+                        <li class="quiz-option">
+                            <input type="checkbox" name="q2" id="q2a" value="capture">
+                            <label for="q2a">
+                                <span class="quiz-option-text">Carbon capture</span>
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="checkbox" name="q2" id="q2b" value="transport">
+                            <label for="q2b">
+                                <span class="quiz-option-text">Transportation</span>
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="checkbox" name="q2" id="q2c" value="storage">
+                            <label for="q2c">
+                                <span class="quiz-option-text">Storage</span>
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="checkbox" name="q2" id="q2d" value="mining">
+                            <label for="q2d">
+                                <span class="quiz-option-text">Mining operations</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Question 3: Ordering -->
+                <div class="quiz-section">
+                    <h3>Question 3</h3>
+                    <p class="question-text">Arrange the CCS process steps in the correct order:</p>
+                    
+                    <ul class="order-list" id="q3OrderList">
+                        <li class="order-item" draggable="true" data-id="store" id="q3-store">
+                            <span class="order-number">1</span>
+                            <span>Store CO₂</span>
+                        </li>
+                        <li class="order-item" draggable="true" data-id="capture" id="q3-capture">
+                            <span class="order-number">2</span>
+                            <span>Capture CO₂</span>
+                        </li>
+                        <li class="order-item" draggable="true" data-id="transport" id="q3-transport">
+                            <span class="order-number">3</span>
+                            <span>Transport CO₂</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check all</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'intro-baseline-quiz';
+        const CORRECT_ANSWERS = {
+            q1: 'A',
+            q2: ['capture', 'transport', 'storage'],
+            q3: ['capture', 'transport', 'store']
+        };
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const q3OrderList = $('#q3OrderList');
+        let q3Order = ['capture', 'transport', 'store'];
+        let draggedItem = null;
+        
+        // Initialize Q3 drag and drop
+        function initQ3DragDrop() {
+            const items = $$('#q3OrderList .order-item');
+            items.forEach(item => {
+                item.draggable = true;
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+                
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem !== item) {
+                        const rect = item.getBoundingClientRect();
+                        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                        q3OrderList.insertBefore(draggedItem, next ? item.nextSibling : item);
+                    }
+                });
+                
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem !== item) {
+                        q3OrderList.insertBefore(draggedItem, item);
+                        updateQ3Order();
+                    }
+                });
+            });
+        }
+        
+        function updateQ3Order() {
+            const items = Array.from($$('#q3OrderList .order-item'));
+            q3Order = items.map(item => item.dataset.id);
+            items.forEach((item, index) => {
+                const numberSpan = item.querySelector('.order-number');
+                if (numberSpan) {
+                    numberSpan.textContent = index + 1;
+                }
+            });
+        }
+        
+        function getQ1Answer() {
+            const selected = $('input[name="q1"]:checked');
+            return selected ? selected.value : null;
+        }
+        
+        function getQ2Answers() {
+            return Array.from($$('input[name="q2"]:checked'))
+                .map(cb => cb.value);
+        }
+        
+        function checkAllAnswers() {
+            const q1Answer = getQ1Answer();
+            const q2Answers = getQ2Answers();
+            
+            const q1Correct = q1Answer === CORRECT_ANSWERS.q1;
+            const q2Correct = q2Answers.length === CORRECT_ANSWERS.q2.length &&
+                CORRECT_ANSWERS.q2.every(ans => q2Answers.includes(ans));
+            const q3Correct = q3Order.every((id, index) => id === CORRECT_ANSWERS.q3[index]);
+            
+            return {
+                q1: q1Correct,
+                q2: q2Correct,
+                q3: q3Correct,
+                allCorrect: q1Correct && q2Correct && q3Correct
+            };
+        }
+        
+        function lockAllInputs() {
+            // Lock Q1
+            $$('input[name="q1"]').forEach(input => input.disabled = true);
+            
+            // Lock Q2
+            $$('input[name="q2"]').forEach(input => input.disabled = true);
+            
+            // Lock Q3
+            const q3Items = $$('#q3OrderList .order-item');
+            q3Items.forEach(item => {
+                item.draggable = false;
+                item.disabled = true;
+            });
+            
+            checkBtn.disabled = true;
+        }
+        
+        function unlockAllInputs() {
+            // Unlock Q1
+            $$('input[name="q1"]').forEach(input => input.disabled = false);
+            
+            // Unlock Q2
+            $$('input[name="q2"]').forEach(input => input.disabled = false);
+            
+            // Unlock Q3
+            const q3Items = $$('#q3OrderList .order-item');
+            q3Items.forEach(item => {
+                item.draggable = true;
+                item.disabled = false;
+                item.classList.remove('correct', 'incorrect');
+            });
+            
+            checkBtn.disabled = false;
+        }
+        
+        function showQ3Feedback() {
+            const results = checkAllAnswers();
+            const q3Items = $$('#q3OrderList .order-item');
+            q3Items.forEach(item => {
+                const itemId = item.dataset.id;
+                const correctIndex = CORRECT_ANSWERS.q3.indexOf(itemId);
+                const currentIndex = q3Order.indexOf(itemId);
+                if (correctIndex === currentIndex) {
+                    item.classList.add('correct');
+                    item.classList.remove('incorrect');
+                } else {
+                    item.classList.add('incorrect');
+                    item.classList.remove('correct');
+                }
+            });
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData) {
+                // Restore Q1
+                if (savedData.q1) {
+                    const q1Input = $(`input[name="q1"][value="${savedData.q1}"]`);
+                    if (q1Input) q1Input.checked = true;
+                }
+                
+                // Restore Q2
+                if (savedData.q2) {
+                    savedData.q2.forEach(value => {
+                        const q2Input = $(`input[name="q2"][value="${value}"]`);
+                        if (q2Input) q2Input.checked = true;
+                    });
+                }
+                
+                // Restore Q3
+                if (savedData.q3) {
+                    q3Order = savedData.q3;
+                    reorderQ3(savedData.q3);
+                    updateQ3Order();
+                }
+                
+                if (savedData.completed) {
+                    const results = checkAllAnswers();
+                    let feedbackText = 'Results: ';
+                    feedbackText += `Q1: ${results.q1 ? 'Correct' : 'Incorrect'}, `;
+                    feedbackText += `Q2: ${results.q2 ? 'Correct' : 'Incorrect'}, `;
+                    feedbackText += `Q3: ${results.q3 ? 'Correct' : 'Incorrect'}. `;
+                    
+                    if (results.allCorrect) {
+                        feedbackText += 'Excellent! All answers are correct.';
+                        showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+                    } else {
+                        feedbackText += 'Please review the incorrect answers.';
+                        showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+                    }
+                    
+                    updateStatusBadge(statusBadge, 'completed', 'Completed');
+                    showQ3Feedback();
+                    lockAllInputs();
+                }
+            }
+            initQ3DragDrop();
+        });
+        
+        function reorderQ3(order) {
+            const items = Array.from($$('#q3OrderList .order-item'));
+            const itemMap = {};
+            items.forEach(item => {
+                itemMap[item.dataset.id] = item;
+            });
+            
+            order.forEach(id => {
+                if (itemMap[id]) {
+                    q3OrderList.appendChild(itemMap[id]);
+                }
+            });
+            updateQ3Order();
+        }
+        
+        // Check all button handler
+        checkBtn.addEventListener('click', () => {
+            const q1Answer = getQ1Answer();
+            const q2Answers = getQ2Answers();
+            
+            if (!q1Answer) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please answer Question 1.');
+                return;
+            }
+            
+            if (q2Answers.length === 0) {
+                showFeedback(feedback, 'error', 'Incomplete', 'Please answer Question 2.');
+                return;
+            }
+            
+            const results = checkAllAnswers();
+            const answers = {
+                q1: q1Answer,
+                q2: q2Answers,
+                q3: q3Order,
+                results: results
+            };
+            
+            saveCompletion(QUIZ_ID, { ...answers, completed: true });
+            
+            let feedbackText = 'Results: ';
+            feedbackText += `Q1: ${results.q1 ? 'Correct' : 'Incorrect'}, `;
+            feedbackText += `Q2: ${results.q2 ? 'Correct' : 'Incorrect'}, `;
+            feedbackText += `Q3: ${results.q3 ? 'Correct' : 'Incorrect'}. `;
+            
+            if (results.allCorrect) {
+                feedbackText += 'Excellent! All answers are correct.';
+                showFeedback(feedback, 'success', 'All Correct!', feedbackText);
+            } else {
+                feedbackText += 'Please review the incorrect answers. Correct answers: Q1=A, Q2=Capture/Transport/Storage, Q3=Capture→Transport→Store.';
+                showFeedback(feedback, 'error', 'Some Incorrect', feedbackText);
+            }
+            
+            updateStatusBadge(statusBadge, 'completed', 'Completed');
+            showQ3Feedback();
+            lockAllInputs();
+        });
+        
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            // Reset Q1
+            $$('input[name="q1"]').forEach(input => input.checked = false);
+            
+            // Reset Q2
+            $$('input[name="q2"]').forEach(input => input.checked = false);
+            
+            // Reset Q3
+            q3Order = ['capture', 'transport', 'store'];
+            reorderQ3(q3Order);
+            updateQ3Order();
+            
+            hideFeedback(feedback);
+            clearCompletion(QUIZ_ID);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            unlockAllInputs();
+        });
+    </script>
+</body>
+</html>
+

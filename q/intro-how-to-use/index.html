@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use This Platform</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Exercise</h2>
+                <p class="instruction-text">Reorder the steps to show the correct learning workflow. Drag items to reorder them.</p>
+                
+                <p class="question-text">What is the correct sequence for using this learning platform?</p>
+                
+                <ul class="order-list" id="orderList">
+                    <li class="order-item" draggable="true" data-id="read" id="item-read">
+                        <span class="order-number">1</span>
+                        <span>Read the lesson content</span>
+                    </li>
+                    <li class="order-item" draggable="true" data-id="watch" id="item-watch">
+                        <span class="order-number">2</span>
+                        <span>Watch the video introduction</span>
+                    </li>
+                    <li class="order-item" draggable="true" data-id="do" id="item-do">
+                        <span class="order-number">3</span>
+                        <span>Complete the interactive exercises</span>
+                    </li>
+                    <li class="order-item" draggable="true" data-id="check" id="item-check">
+                        <span class="order-number">4</span>
+                        <span>Check your understanding</span>
+                    </li>
+                    <li class="order-item" draggable="true" data-id="continue" id="item-continue">
+                        <span class="order-number">5</span>
+                        <span>Continue to the next lesson</span>
+                    </li>
+                </ul>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'intro-how-to-use';
+        const CORRECT_ORDER = ['watch', 'read', 'do', 'check', 'continue'];
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const orderList = $('#orderList');
+        let draggedItem = null;
+        let currentOrder = [...CORRECT_ORDER]; // Start with correct order, will be shuffled on reset
+        
+        // Initialize drag and drop
+        function initDragDrop() {
+            const items = $$('.order-item');
+            items.forEach((item, index) => {
+                item.draggable = true;
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+                
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem !== item) {
+                        const rect = item.getBoundingClientRect();
+                        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                        orderList.insertBefore(draggedItem, next ? item.nextSibling : item);
+                    }
+                });
+                
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem !== item) {
+                        orderList.insertBefore(draggedItem, item);
+                        updateOrder();
+                    }
+                });
+            });
+        }
+        
+        function updateOrder() {
+            const items = Array.from($$('.order-item'));
+            currentOrder = items.map(item => item.dataset.id);
+            items.forEach((item, index) => {
+                const numberSpan = item.querySelector('.order-number');
+                if (numberSpan) {
+                    numberSpan.textContent = index + 1;
+                }
+            });
+        }
+        
+        function checkOrder() {
+            return currentOrder.every((id, index) => id === CORRECT_ORDER[index]);
+        }
+        
+        function lockInputs() {
+            const items = $$('.order-item');
+            items.forEach(item => {
+                item.draggable = false;
+                item.disabled = true;
+                const isCorrect = checkOrder();
+                if (isCorrect) {
+                    item.classList.add('correct');
+                    item.classList.remove('incorrect');
+                } else {
+                    const itemId = item.dataset.id;
+                    const correctIndex = CORRECT_ORDER.indexOf(itemId);
+                    const currentIndex = currentOrder.indexOf(itemId);
+                    if (correctIndex === currentIndex) {
+                        item.classList.add('correct');
+                        item.classList.remove('incorrect');
+                    } else {
+                        item.classList.add('incorrect');
+                        item.classList.remove('correct');
+                    }
+                }
+            });
+        }
+        
+        function unlockInputs() {
+            const items = $$('.order-item');
+            items.forEach(item => {
+                item.draggable = true;
+                item.disabled = false;
+                item.classList.remove('correct', 'incorrect');
+            });
+        }
+        
+        // Load saved state
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = loadCompletion(QUIZ_ID);
+            if (savedData && savedData.order) {
+                currentOrder = savedData.order;
+                reorderItems(savedData.order);
+                updateOrder();
+                
+                if (savedData.completed) {
+                    const isCorrect = checkOrder();
+                    if (isCorrect) {
+                        showFeedback(feedback, 'success', 'Correct!', 'The steps are in the correct order: Watch → Read → Do → Check → Continue. Well done!');
+                    } else {
+                        showFeedback(feedback, 'error', 'Incorrect', 'The correct order is: Watch → Read → Do → Check → Continue. Please review your sequence.');
+                    }
+                    updateStatusBadge(statusBadge, 'completed', 'Completed');
+                    lockInputs();
+                }
+            } else {
+                // Shuffle initial order
+                shuffleOrder();
+            }
+            initDragDrop();
+        });
+        
+        function shuffleOrder() {
+            const shuffled = [...CORRECT_ORDER].sort(() => Math.random() - 0.5);
+            reorderItems(shuffled);
+            updateOrder();
+        }
+        
+        function reorderItems(order) {
+            const items = Array.from($$('.order-item'));
+            const itemMap = {};
+            items.forEach(item => {
+                itemMap[item.dataset.id] = item;
+            });
+            
+            order.forEach(id => {
+                if (itemMap[id]) {
+                    orderList.appendChild(itemMap[id]);
+                }
+            });
+            updateOrder();
+        }
+        
+        // Check button handler
+        checkBtn.addEventListener('click', () => {
+            const isCorrect = checkOrder();
+            saveCompletion(QUIZ_ID, { order: currentOrder, isCorrect });
+            
+            if (isCorrect) {
+                showFeedback(feedback, 'success', 'Correct!', 'The steps are in the correct order: Watch → Read → Do → Check → Continue. Well done!');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            } else {
+                showFeedback(feedback, 'error', 'Incorrect', 'The correct order is: Watch → Read → Do → Check → Continue. Please review your sequence.');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            }
+            
+            lockInputs();
+        });
+        
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            shuffleOrder();
+            hideFeedback(feedback);
+            clearCompletion(QUIZ_ID);
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            unlockInputs();
+        });
+    </script>
+</body>
+</html>
+
