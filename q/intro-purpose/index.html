@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson 1 – Welcome to Carbon4Minerals</title>
+    <link rel="stylesheet" href="../../assets/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lesson 1 – Welcome to Carbon4Minerals</h1>
+        </header>
+        <main>
+            <div class="card">
+                <div class="status-badge not-submitted" id="statusBadge">Not submitted</div>
+                
+                <h2>Quiz Question</h2>
+                <p class="question-text">What is the main purpose of this training course?</p>
+                
+                <ul class="quiz-options" id="quizOptions">
+                    <li class="quiz-option">
+                        <input type="radio" name="answer" id="answerA" value="A">
+                        <label for="answerA">
+                            <span class="quiz-option-letter">A)</span>
+                            <span class="quiz-option-text">To provide comprehensive training on carbon capture and storage technologies for mineral processing industries</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="radio" name="answer" id="answerB" value="B">
+                        <label for="answerB">
+                            <span class="quiz-option-letter">B)</span>
+                            <span class="quiz-option-text">To teach basic chemistry principles</span>
+                        </label>
+                    </li>
+                    <li class="quiz-option">
+                        <input type="radio" name="answer" id="answerC" value="C">
+                        <label for="answerC">
+                            <span class="quiz-option-letter">C)</span>
+                            <span class="quiz-option-text">To introduce general environmental science concepts</span>
+                        </label>
+                    </li>
+                </ul>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="checkBtn">Check</button>
+                    <button class="btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    <div class="feedback-title"></div>
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../../assets/app.js"></script>
+    <script>
+        const QUIZ_ID = 'intro-purpose';
+        const CORRECT_ANSWER = 'A';
+        
+        const checkBtn = $('#checkBtn');
+        const resetBtn = $('#resetBtn');
+        const feedback = $('#feedback');
+        const statusBadge = $('#statusBadge');
+        const answerInputs = $$('input[name="answer"]');
+        
+        // Load saved answer on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = loadQuizAnswer(QUIZ_ID);
+            if (savedData) {
+                const savedAnswer = savedData.answer;
+                const answerInput = $(`input[value="${savedAnswer}"]`);
+                if (answerInput) {
+                    answerInput.checked = true;
+                }
+                
+                if (savedData.isCorrect) {
+                    showFeedback(feedback, 'success', 'Correct!', 'Well done! This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                    updateStatusBadge(statusBadge, 'completed', 'Completed');
+                } else {
+                    showFeedback(feedback, 'error', 'Incorrect', 'The correct answer is A. This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                    updateStatusBadge(statusBadge, 'completed', 'Completed');
+                }
+                
+                // Disable inputs after submission
+                answerInputs.forEach(input => {
+                    input.disabled = true;
+                });
+                checkBtn.disabled = true;
+            }
+        });
+        
+        // Check button handler
+        checkBtn.addEventListener('click', () => {
+            const selectedAnswer = $('input[name="answer"]:checked');
+            
+            if (!selectedAnswer) {
+                showFeedback(feedback, 'error', 'No answer selected', 'Please select an answer before checking.');
+                return;
+            }
+            
+            const answerValue = selectedAnswer.value;
+            const isCorrect = answerValue === CORRECT_ANSWER;
+            
+            // Save to localStorage
+            saveQuizAnswer(QUIZ_ID, answerValue, isCorrect);
+            
+            // Show feedback
+            if (isCorrect) {
+                showFeedback(feedback, 'success', 'Correct!', 'Well done! This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            } else {
+                showFeedback(feedback, 'error', 'Incorrect', 'The correct answer is A. This training course is designed to provide comprehensive training on carbon capture and storage technologies specifically for mineral processing industries.');
+                updateStatusBadge(statusBadge, 'completed', 'Completed');
+            }
+            
+            // Disable inputs after submission
+            answerInputs.forEach(input => {
+                input.disabled = true;
+            });
+            checkBtn.disabled = true;
+        });
+        
+        // Reset button handler
+        resetBtn.addEventListener('click', () => {
+            // Clear selection
+            answerInputs.forEach(input => {
+                input.checked = false;
+                input.disabled = false;
+            });
+            
+            // Clear feedback
+            hideFeedback(feedback);
+            
+            // Clear localStorage
+            clearQuizAnswer(QUIZ_ID);
+            
+            // Reset status badge
+            updateStatusBadge(statusBadge, 'not-submitted', 'Not submitted');
+            
+            // Re-enable check button
+            checkBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
+
